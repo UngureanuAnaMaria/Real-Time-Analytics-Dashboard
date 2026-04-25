@@ -1,4 +1,5 @@
 const { BigQuery } = require('@google-cloud/bigquery');
+const axios = require('axios');
 const bigquery = new BigQuery();
 
 /**
@@ -9,6 +10,7 @@ exports.processEvent = async (message) => {
     // 1. Decode data from Pub/Sub (Handling at-least-once delivery)
     const data = JSON.parse(Buffer.from(message.data, 'base64').toString());
 
+    const GATEWAY_URL = "https://websocket-gateway-475406249677.us-central1.run.app/notify";
     const datasetId = 'analytics_db';
     const tableId = 'view_stats';
 
@@ -30,6 +32,10 @@ exports.processEvent = async (message) => {
             .insert([row], { insertId: data.eventId });
 
         console.log(`Success: Event ${data.eventId} saved to BigQuery.`);
+    
+        // 4. Notify WebSocket Gateway about the new event
+        await axios.post(GATEWAY_URL, data);
+        console.log(`Success: Notified WebSocket Gateway about event ${data.eventId}.`);
     } catch (error) {
         console.error('Error inserting into BigQuery:', JSON.stringify(error));
     }
