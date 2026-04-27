@@ -221,22 +221,35 @@ gcloud run deploy websocket-gateway `
 
 ---
 
-## Testing and Metrics (CAP Analysis)
+## Testing and Metrics
 
-The system is validated using four scenarios based on the CAP theorem (Availability vs Consistency):
+To verify that the system functions correctly and follows the proposed architectural principles, we have included several testing utilities in the `scripts` folder. The screenshots below represent our reference runs; you can expect similar results when running these scripts in your own environment.
 
-* **End-to-End Latency (`test-latency.ps1`)**
-  Measures the full pipeline latency: Producer → Pub/Sub → FaaS → BigQuery → Gateway
-  *(Target: milliseconds range)*
+### 1. Latency Testing (End-to-End)
+We use the `test-latency.ps1` script to measure the total time an event takes to travel through the pipeline: Service A → Pub/Sub → Cloud Function → BigQuery → WebSocket Gateway.
+* **What to expect:** The first run will be slower due to the "Cold Start" phenomenon (initialization of containers in Google Cloud). Subsequent runs will be significantly faster.
+* **Our results:** In our tests, we achieved a stable latency of approximately 1 second after the "warm-up" phase.
 
-* **Eventual Consistency (`test_consistency.ps1`)**
-  Validates the AP model. Data may appear with delay (consistency window), but the system remains available.
+![Latency Test Example](./assets/lantecy_results.png)
 
-* **Resilience (`test_recovery.ps1`)**
-  Measures MTTR (Mean Time To Recovery) by triggering a controlled crash (`/crash`). Demonstrates Cloud Run auto-healing.
+### 2. Consistency Window (Eventual Consistency)
+The system follows an **AP (Availability & Partition Tolerance)** model, prioritizing availability. The `test_consistency.ps1` script verifies the time needed for data to become consistent across all distributed layers.
+* **What to expect:** You will notice a small delay (consistency window) between sending the data and the moment it becomes queryable on the dashboard.
+* **Our results:** The average measured window for this synchronization was 1.2 seconds.
 
-* **Throughput Testing (`scripts.txt`)**
-  Load testing using `hey` tool (up to 1000 requests with 50 concurrent users).
+![Consistency Test Example](./assets/consistency_results.png)
+
+### 3. Resilience and Recovery (Auto-healing)
+We verified the system's recovery capacity using the `test_recovery.ps1` script, which forces a crash of the Gateway service via the `/crash` endpoint.
+* **What to expect:** The script will report that the service is "DOWN," followed by a phase where Google Cloud Run automatically restarts the instance without human intervention.
+* **Our results:** The system fully recovered and became functional again in approximately 5 seconds.
+
+![Recovery Test Example](./assets/recovery_results.png)
+
+### 4. Load Testing (Throughput)
+To evaluate performance under pressure, we used the `hey` tool to simulate heavy traffic.
+* **Test Example:** `./hey.exe -n 1000 -c 50 https://service-a-url...` (1000 requests with 50 concurrent users).
+* We validated that Service A remains available while Pub/Sub acts as a buffer (backpressure management) for the rest of the pipeline.
 
 
 ---
