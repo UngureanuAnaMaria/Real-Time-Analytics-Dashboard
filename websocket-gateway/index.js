@@ -22,11 +22,49 @@ const subscriptionName = 'websocket-gateway-sub';
 // Endpoint to receive notifications from Cloud Function
 app.post('/notify', (req, res) => {
     const eventData = req.body;
-    console.log('Notification received from FaaS:', eventData.eventId);
+    console.log(`Notification received from FaaS: ${eventData.eventId}. Timestamp received: ${eventData.timestamp}`);
+
+    let rawTimestamp = eventData.timestamp;
     
-    io.emit('new-view', eventData);
+    if (rawTimestamp && typeof rawTimestamp === 'object' && rawTimestamp.value) {
+        rawTimestamp = rawTimestamp.value;
+    }
+
+    console.log(`Notification received: ${eventData.eventId}. Final TS: ${rawTimestamp}`);
+
+    
+    io.emit('new-view', {
+        resourceId: eventData.resourceId,
+        timestamp: eventData.timestamp, 
+        eventId: eventData.eventId,
+        resourceType: eventData.resourceType
+    });
     io.emit('stats-refresh-trigger', { lastResourceId: eventData.resourceId });
     res.status(200).send('OK');
+});
+
+// Endpoint utilized for measuring the eventual consistency window via HTTP GET
+app.get('/', async (req, res) => {
+    try {
+        // Querying the latest 10 records to verify data propagation from Service A
+        const query = `SELECT resourceId FROM \`pcd-analytics-project.analytics_db.view_stats\` ORDER BY timestamp DESC LIMIT 10`;
+        const [rows] = await bigquery.query(query);
+        res.status(200).json(rows);
+    } catch (err) {
+        console.error('BigQuery Error on GET /:', err);
+        res.status(500).send('Error querying BigQuery');
+    }
+});
+
+// Endpoint to simulate a service crash
+app.post('/crash', (req, res) => {
+    console.log('--- CRASH TRIGGERED: Simulating service failure ---');
+    res.status(500).json({ status: 'crashing', message: 'Instance is terminating' });
+    
+    // Graceful exit to let the response send, then kill the process
+    setTimeout(() => {
+        process.exit(1); 
+    }, 500);
 });
 
 // Websockets Logic + BigQuery Integration

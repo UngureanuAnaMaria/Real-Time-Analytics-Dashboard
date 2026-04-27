@@ -1,0 +1,7 @@
+$MOVIE_ID="573a1390f29313caabcd446f"
+
+./hey.exe -n 200 -c 10 https://service-a-475406249677.us-central1.run.app/api/v1/movies/$MOVIE_ID > throughput200_10.txt
+
+./hey.exe -n 500 -c 25 https://service-a-475406249677.us-central1.run.app/api/v1/movies/$MOVIE_ID > throughput500_25.txt
+
+./hey.exe -n 1000 -c 50 https://service-a-475406249677.us-central1.run.app/api/v1/movies/$MOVIE_ID > throughput1000_50.txt

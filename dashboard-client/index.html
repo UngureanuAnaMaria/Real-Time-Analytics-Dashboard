@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,9 +17,15 @@
             --text: #f8fafc;
         }
 
-        * { box-sizing: border-box; }
-        body, html { 
-            margin: 0; padding: 0; min-height: 100%;
+        * {
+            box-sizing: border-box;
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            min-height: 100%;
             font-family: 'Inter', sans-serif;
             background-color: var(--bg);
             color: var(--text);
@@ -41,14 +48,27 @@
         }
 
         @media (min-width: 768px) {
-            .header { flex-direction: row; justify-content: space-between; align-items: center; }
+            .header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
         }
 
-        h1 { margin: 0; font-size: 1.5rem; color: var(--primary); font-weight: 700; }
+        h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: var(--primary);
+            font-weight: 700;
+        }
 
-        .user-badge { 
-            background: #0ea5e9; color: #fff; padding: 8px 16px; 
-            border-radius: 8px; font-weight: 600; font-size: 0.9rem;
+        .user-badge {
+            background: #0ea5e9;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
         }
 
         /* KPI Cards */
@@ -67,8 +87,19 @@
             text-align: center;
         }
 
-        .kpi-label { font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.5px; }
-        .kpi-val { font-size: 1.75rem; font-weight: 700; color: #fff; margin-top: 5px; }
+        .kpi-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #94a3b8;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi-val {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #fff;
+            margin-top: 5px;
+        }
 
         /* Content Grid */
         .main-content {
@@ -78,7 +109,9 @@
         }
 
         @media (min-width: 992px) {
-            .main-content { grid-template-columns: 1.2fr 0.8fr; }
+            .main-content {
+                grid-template-columns: 1.2fr 0.8fr;
+            }
         }
 
         .panel {
@@ -90,9 +123,9 @@
             height: 500px;
         }
 
-        .panel-header { 
-            padding: 15px 20px; 
-            font-weight: 700; 
+        .panel-header {
+            padding: 15px 20px;
+            font-weight: 700;
             background: #1e293b;
             border-bottom: 1px solid var(--border);
             border-radius: 16px 16px 0 0;
@@ -117,104 +150,154 @@
             animation: fadeIn 0.3s ease-in;
         }
 
-        .id-tag { font-family: monospace; color: var(--primary); font-weight: 600; }
-        .count-badge { background: #4f46e5; color: white; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; }
-        .ts { color: #64748b; font-size: 0.75rem; }
+        .id-tag {
+            font-family: monospace;
+            color: var(--primary);
+            font-weight: 600;
+        }
 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .count-badge {
+            background: #4f46e5;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .ts {
+            color: #64748b;
+            font-size: 0.75rem;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
 
         /* Custom Scrollbar */
-        .feed::-webkit-scrollbar { width: 6px; }
-        .feed::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .feed::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .feed::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
     </style>
 </head>
+
 <body>
 
-<div class="dashboard">
-    <div class="header">
-        <h1>CloudAnalytics Dashboard</h1>
-        <div class="user-badge" id="user-count">0 Users Online</div>
-    </div>
-
-    <div class="kpi-row">
-        <div class="kpi-card">
-            <div class="kpi-label">Total Access Events</div>
-            <div class="kpi-val" id="total-events">0</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Unique Movies</div>
-            <div class="kpi-val" id="active-res">0</div>
-        </div>
-    </div>
-
-    <div class="main-content">
-        <div class="panel">
-            <div class="panel-header">Live Access Log</div>
-            <div id="recent-list" class="feed"></div>
+    <div class="dashboard">
+        <div class="header">
+            <h1>CloudAnalytics Dashboard</h1>
+            <div class="user-badge" id="user-count">0 Users Online</div>
         </div>
 
-        <div class="panel">
-            <div class="panel-header">Most Viewed (Aggregate)</div>
-            <div id="top-movies-list" class="feed"></div>
-        </div>
-    </div>
-</div>
-
-<script>
-    const socket = io('https://websocket-gateway-475406249677.us-central1.run.app');
-    let movieStats = {};
-
-    socket.on('initial-activity', (rows) => {
-        const list = document.getElementById('recent-list');
-        list.innerHTML = '';
-        rows.forEach(data => addEventUI(data, false));
-    });
-
-    socket.on('initial-stats', (rows) => {
-        movieStats = {};
-        rows.forEach(row => movieStats[row.resourceId] = parseInt(row.views));
-        updateStatsUI();
-    });
-
-    socket.on('new-view', (data) => addEventUI(data, true));
-
-    socket.on('stats-refresh-trigger', (data) => {
-        movieStats[data.lastResourceId] = (movieStats[data.lastResourceId] || 0) + 1;
-        updateStatsUI();
-    });
-
-    socket.on('user-count-update', (count) => {
-        document.getElementById('user-count').innerText = `${count} Users Online`;
-    });
-
-    function addEventUI(data, isNew) {
-        const list = document.getElementById('recent-list');
-        const div = document.createElement('div');
-        div.className = 'item';
-        div.innerHTML = `
-            <div>
-                <span class="ts">${new Date().toLocaleTimeString()}</span><br>
-                <span class="id-tag">${data.resourceId}</span>
+        <div class="kpi-row">
+            <div class="kpi-card">
+                <div class="kpi-label">Total Access Events</div>
+                <div class="kpi-val" id="total-events">0</div>
             </div>
-            <span style="color: #10b981; font-size: 0.75rem; font-weight: 700;">ACCESS</span>
-        `;
-        isNew ? list.insertBefore(div, list.firstChild) : list.appendChild(div);
-    }
+            <div class="kpi-card">
+                <div class="kpi-label">Unique Movies</div>
+                <div class="kpi-val" id="active-res">0</div>
+            </div>
+        </div>
 
-    function updateStatsUI() {
-        const list = document.getElementById('top-movies-list');
-        const sorted = Object.entries(movieStats).sort((a,b) => b[1]-a[1]);
-        list.innerHTML = sorted.map(([id, count]) => `
+        <div class="main-content">
+            <div class="panel">
+                <div class="panel-header">Live Access Log</div>
+                <div id="recent-list" class="feed"></div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">Most Viewed (Aggregate)</div>
+                <div id="top-movies-list" class="feed"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io('https://websocket-gateway-475406249677.us-central1.run.app');
+        let movieStats = {};
+
+        socket.on('initial-activity', (rows) => {
+            const list = document.getElementById('recent-list');
+            list.innerHTML = '';
+            rows.forEach(data => addEventUI(data, false));
+        });
+
+        socket.on('initial-stats', (rows) => {
+            movieStats = {};
+            rows.forEach(row => movieStats[row.resourceId] = parseInt(row.views));
+            updateStatsUI();
+        });
+
+        socket.on('new-view', (data) => addEventUI(data, true));
+
+        socket.on('stats-refresh-trigger', (data) => {
+            movieStats[data.lastResourceId] = (movieStats[data.lastResourceId] || 0) + 1;
+            updateStatsUI();
+        });
+
+        socket.on('user-count-update', (count) => {
+            document.getElementById('user-count').innerText = `${count} Users Online`;
+        });
+
+        function addEventUI(data, isNew) {
+            const list = document.getElementById('recent-list');
+            const div = document.createElement('div');
+            div.className = 'item';
+
+            let rawValue = data.timestamp;
+            if (data.timestamp && typeof data.timestamp === 'object' && data.timestamp.value) {
+                rawValue = data.timestamp.value;
+            }
+
+            let displayString = "";
+            if (rawValue) {
+                const dateObj = new Date(rawValue);
+                if (!isNaN(dateObj.getTime())) {
+                    displayString = dateObj.toLocaleDateString() + " " + dateObj.toLocaleTimeString();
+                } else {
+                    displayString = rawValue.replace('T', ' ').substring(0, 19);
+                }
+            } else {
+                displayString = new Date().toLocaleString();
+            }
+
+            div.innerHTML = `
+        <div>
+            <span class="ts" style="font-size: 0.7rem; color: var(--primary);">${displayString}</span><br>
+            <span class="id-tag">${data.resourceId}</span>
+        </div>
+        <span style="color: #10b981; font-size: 0.75rem; font-weight: 700;">ACCESS</span>
+    `;
+
+            isNew ? list.insertBefore(div, list.firstChild) : list.appendChild(div);
+        }
+
+        function updateStatsUI() {
+            const list = document.getElementById('top-movies-list');
+            const sorted = Object.entries(movieStats).sort((a, b) => b[1] - a[1]);
+            list.innerHTML = sorted.map(([id, count]) => `
             <div class="item">
                 <span class="id-tag">${id}</span>
                 <span class="count-badge">${count} views</span>
             </div>
         `).join('');
-        
-        document.getElementById('total-events').innerText = Object.values(movieStats).reduce((a,b)=>a+b,0);
-        document.getElementById('active-res').innerText = Object.keys(movieStats).length;
-    }
-</script>
+
+            document.getElementById('total-events').innerText = Object.values(movieStats).reduce((a, b) => a + b, 0);
+            document.getElementById('active-res').innerText = Object.keys(movieStats).length;
+        }
+    </script>
 
 </body>
+
 </html>
